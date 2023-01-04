@@ -1455,22 +1455,16 @@ var ColorMixin = {
     return new PDFTilingPattern$1(this, bbox, xStep, yStep, stream);
   },
   addSpotColor(name, c, m, y, k) {
-    this._offsets.push(this._offset);
+    const values = [c, m, y, k];
+    const data = `[/Separation /${name.replace(/\s/g, '#20')} /DeviceCMYK << /Range [0 1 0 1 0 1 0 1] /C0 [0 0 0 0] /C1 [${values.map(value => value / 100.0).join(' ')}]  /FunctionType 2 /Domain [0 1] /N 1>>]`;
+    const reference = this.ref(data);
     this.spotColors[name] = {
-      id: this._offsets.length,
+      id: reference.id,
       index: ++this._spotColorsCount,
       name: name,
-      values: [c, m, y, k]
+      values
     };
-  },
-  _writeSpotColors() {
-    Object.entries(this.spotColors).forEach(([key, item]) => {
-      let output = '';
-      output += `${item.id} 0 obj \n`;
-      output += `[/Separation /${item.name.replace(/\s/g, '#20')} /DeviceCMYK << /Range [0 1 0 1 0 1 0 1] /C0 [0 0 0 0] /C1 [${item.values.map(value => value / 100.0).join(' ')}]  /FunctionType 2 /Domain [0 1] /N 1>>]`;
-      output += `\nendobj`;
-      this._write(output);
-    });
+    reference.end();
   }
 };
 var namedColors = {
@@ -5406,7 +5400,6 @@ Please pipe the document into a Node stream.\
   _finalize() {
     // generate xref
     const xRefOffset = this._offset;
-    this._writeSpotColors();
     this._write('xref');
     this._write(`0 ${this._offsets.length + 1}`);
     this._write('0000000000 65535 f ');

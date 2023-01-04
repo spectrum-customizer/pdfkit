@@ -1913,28 +1913,18 @@ var ColorMixin = {
     return new PDFTilingPattern$1(this, bbox, xStep, yStep, stream);
   },
   addSpotColor: function addSpotColor(name, c, m, y, k) {
-    this._offsets.push(this._offset);
+    var values = [c, m, y, k];
+    var data = "[/Separation /".concat(name.replace(/\s/g, '#20'), " /DeviceCMYK << /Range [0 1 0 1 0 1 0 1] /C0 [0 0 0 0] /C1 [").concat(values.map(function (value) {
+      return value / 100.0;
+    }).join(' '), "]  /FunctionType 2 /Domain [0 1] /N 1>>]");
+    var reference = this.ref(data);
     this.spotColors[name] = {
-      id: this._offsets.length,
+      id: reference.id,
       index: ++this._spotColorsCount,
       name: name,
-      values: [c, m, y, k]
+      values: values
     };
-  },
-  _writeSpotColors: function _writeSpotColors() {
-    var _this = this;
-    Object.entries(this.spotColors).forEach(function (_ref) {
-      var _ref2 = _slicedToArray(_ref, 2),
-        key = _ref2[0],
-        item = _ref2[1];
-      var output = '';
-      output += "".concat(item.id, " 0 obj \n");
-      output += "[/Separation /".concat(item.name.replace(/\s/g, '#20'), " /DeviceCMYK << /Range [0 1 0 1 0 1 0 1] /C0 [0 0 0 0] /C1 [").concat(item.values.map(function (value) {
-        return value / 100.0;
-      }).join(' '), "]  /FunctionType 2 /Domain [0 1] /N 1>>]");
-      output += "\nendobj";
-      _this._write(output);
-    });
+    reference.end();
   }
 };
 var namedColors = {
@@ -6139,7 +6129,6 @@ var PDFDocument = /*#__PURE__*/function (_stream$Readable) {
     value: function _finalize() {
       // generate xref
       var xRefOffset = this._offset;
-      this._writeSpotColors();
       this._write('xref');
       this._write("0 ".concat(this._offsets.length + 1));
       this._write('0000000000 65535 f ');
